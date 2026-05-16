@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Member Workspace</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+    .navbar { background-color: #0d47a1; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .user-badge { background-color: #1a237e; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+    .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+    .panel-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .panel-card h2 { margin-top: 0; color: #0d47a1; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+    .task-list { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
+    .task-card { background-color: #f8f9fa; border-left: 5px solid #ffc107; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .task-card.In_Progress { border-left-color: #17a2b8; }
+    .task-card.Completed { border-left-color: #28a745; background-color: #f1f9f3; }
+    .task-meta { font-size: 13px; color: #666; margin: 10px 0; display: flex; flex-direction: column; gap: 3px; }
+    select { padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; background: white; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h2>My Personal Workspace Board 📋</h2>
+    <div>
+      <span id="memberBadge" class="user-badge">Member</span>
+      <button class="logout-btn" onclick="logout()">Log Out 🚪</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="panel-card">
+      <h2>Assigned Work Orders</h2>
+      <div id="memberTasks" class="task-list">Loading workspace components...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin + '/api';
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('userRole');
+
+    if (!token || role !== 'Member') { 
+      localStorage.clear();
+      window.location.href = 'index.html'; 
+    }
+
+    document.getElementById('memberBadge').innerText = `${localStorage.getItem('userName')} (Member)`;
+
+    async function loadMemberTasks() {
+      try {
+        const res = await fetch(`${API_BASE}/tasks`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const tasks = await res.json();
+        const container = document.getElementById('memberTasks');
+        container.innerHTML = tasks.length === 0 ? "<p>You have no outstanding tasks assigned to your name.</p>" : "";
+
+        tasks.forEach(t => {
+          const statusClass = t.status.replace(" ", "_");
+          const div = document.createElement('div');
+          div.className = `task-card ${statusClass}`;
+          
+          div.innerHTML = `
+            <h3>${t.title}</h3>
+            <p>${t.description}</p>
+            <div class="task-meta">
+              <span><strong>Assignee:</strong> ${t.assignedTo ? t.assignedTo.name : 'Me'}</span>
+              <span><strong>Issued By Manager:</strong> ${t.createdBy ? t.createdBy.name : 'Admin'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+              <span style="font-size:13px; font-weight:bold; color:#444;">Update Status:</span>
+              <select onchange="updateStatus('${t._id}', this.value)">
+                <option value="Pending" ${t.status === 'Pending' ? 'selected' : ''}>Pending ⏳</option>
+                <option value="In Progress" ${t.status === 'In Progress' ? 'selected' : ''}>In Progress ⚙️</option>
+                <option value="Completed" ${t.status === 'Completed' ? 'selected' : ''}>Completed ✅</option>
+              </select>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        document.getElementById('memberTasks').innerHTML = "<p style='color:red;'>Failed to load workspace data.</p>";
+      }
+    }
+
+    async function updateStatus(id, newStatus) {
+      const res = await fetch(`${API_BASE}/tasks/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if(res.ok) { loadMemberTasks(); } else { alert("Failed to modify assignment."); }
+    }
+
+    function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+    loadMemberTasks();
+  </script>
+</body>
+</html>

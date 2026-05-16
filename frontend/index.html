@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Task Manager - Welcome</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .auth-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+    .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-weight: bold; }
+    .tab.active { color: #1a237e; border-bottom: 3px solid #1a237e; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; color: #444; font-weight: bold; font-size: 14px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background-color: #1a237e; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    button:hover { background-color: #0d1b60; }
+    .hidden { display: none !important; }
+    #message { margin-top: 15px; text-align: center; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+    <div class="tabs">
+      <div id="loginTab" class="tab active" onclick="switchTab('login')">Login</div>
+      <div id="signupTab" class="tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="manager@company.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </div>
+      <button type="submit">Log In 👋</button>
+    </form>
+
+    <form id="signupForm" class="hidden">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Sai Teja" required>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="signupEmail" placeholder="teja@company.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="••••••••" required>
+      </div>
+      <div class="form-group">
+        <label>Your Workspace Role</label>
+        <select id="signupRole">
+          <option value="Admin">Admin (Project Manager)</option>
+          <option value="Member">Member (Team Worker)</option>
+        </select>
+      </div>
+      <button type="submit">Create Account 🚀</button>
+    </form>
+
+    <p id="message"></p>
+  </div>
+
+  <script>
+    // DYNAMIC ENDPOINT DISCOVERY FALLBACK
+    const API_BASE = window.location.origin + '/api';
+    const messageEl = document.getElementById('message');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('userRole');
+      if (token && role) {
+        if (role === 'Admin') { window.location.href = 'admin.html'; }
+        else { window.location.href = 'member.html'; }
+      }
+    });
+
+    function switchTab(type) {
+      messageEl.innerText = "";
+      if (type === 'login') {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('signupForm').classList.add('hidden');
+        document.getElementById('loginTab').classList.add('active');
+        document.getElementById('signupTab').classList.remove('active');
+      } else {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('signupForm').classList.remove('hidden');
+        document.getElementById('loginTab').classList.remove('active');
+        document.getElementById('signupTab').classList.add('active');
+      }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('userRole', data.user.role);
+          localStorage.setItem('userName', data.user.name);
+
+          if (data.user.role === 'Admin') { window.location.href = 'admin.html'; } 
+          else { window.location.href = 'member.html'; }
+        } else {
+          messageEl.style.color = "red";
+          messageEl.innerText = data.message;
+        }
+      } catch { messageEl.innerText = "Backend Server Offline."; }
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('signupName').value,
+            email: document.getElementById('signupEmail').value,
+            password: document.getElementById('signupPassword').value,
+            role: document.getElementById('signupRole').value
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          messageEl.style.color = "green";
+          messageEl.innerText = "Account created! Switching to login tab...";
+          setTimeout(() => switchTab('login'), 1500);
+        } else {
+          messageEl.style.color = "red";
+          messageEl.innerText = data.message;
+        }
+      } catch { messageEl.innerText = "Backend Server Offline."; }
+    });
+  </script>
+</body>
+</html>
