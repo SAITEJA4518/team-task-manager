@@ -30,18 +30,17 @@ const __dirname = path.dirname(__filename);
 // Instruct the system to host the static frontend folder elements
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// FIX: Official Express v5 compliant named-splat routing syntax
+// Express v5 compliant named-splat routing syntax
 app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
 // Database Connection Bridge
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI || '')
   .then(() => console.log('Successfully connected to the Database Vault! ☁️🔋'))
   .catch((err) => console.error('Database connection error ❌:', err.message));
 
-app.listen(PORT, () => {
+// CRUCIAL: Bind to 0.0.0.0 to let Railway map public HTTP traffic cleanly
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is actively running on port ${PORT}`);
 });
-
-// Production Tracking Revision Stamp ID: 1002
