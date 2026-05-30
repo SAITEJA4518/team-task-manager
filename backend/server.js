@@ -31,7 +31,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Standard explicit catch-all that forces Express to serve index.html for the root address
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
