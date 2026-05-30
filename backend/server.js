@@ -30,8 +30,8 @@ const __dirname = path.dirname(__filename);
 // Instruct the system to host the static frontend folder elements
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Express v5 compliant named-splat routing syntax
-app.get('/*splat', (req, res) => {
+// Standard explicit catch-all that forces Express to serve index.html for the root address
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
@@ -40,7 +40,7 @@ mongoose.connect(process.env.MONGO_URI || '')
   .then(() => console.log('Successfully connected to the Database Vault! ☁️🔋'))
   .catch((err) => console.error('Database connection error ❌:', err.message));
 
-// CRUCIAL: Bind to 0.0.0.0 to let Railway map public HTTP traffic cleanly
+// Bind to global host interface 0.0.0.0 for cloud network routing
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is actively running on port ${PORT}`);
 });
