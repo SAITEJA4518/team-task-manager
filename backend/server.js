@@ -30,8 +30,8 @@ const __dirname = path.dirname(__filename);
 // Instruct the system to host the static frontend folder elements
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// FIX: Express v5 strict named parameter matching syntax
-app.get('/*catchall', (req, res) => {
+// FIX: Official Express v5 matching pattern for root + nested sub-directories
+app.get('/{*catchall}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
