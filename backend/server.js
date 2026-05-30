@@ -14,7 +14,6 @@ import taskRoutes from './routes/task.js';
 dotenv.config();
 
 const app = express();
-// Railway passes a custom PORT variable here automatically!
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
@@ -31,8 +30,8 @@ const __dirname = path.dirname(__filename);
 // Instruct the system to host the static frontend folder elements
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Handle all non-API web traffic by handing over the primary entrance gateway map
-app.get('*', (req, res) => {
+// FIX: Express v5 strict named parameter matching syntax
+app.get('/*catchall', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
